@@ -20,3 +20,12 @@ node_modules/
 *.key
 *.pem
 users.json
+
+# Python virtual environments
+.venv/
+backend/.venv/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.pyc
