@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+*.log
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Node (if any)
+node_modules/
+
+# Secrets / local config
+*.key
+*.pem
+users.json

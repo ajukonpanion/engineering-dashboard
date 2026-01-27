@@ -1,0 +1,16 @@
+[Unit]
+Description=Konpanion Hub Dashboard
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/konpanion-hub/backend
+ExecStart=/home/pi/konpanion-hub/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=2
+Environment=KONPANION_HUB_ID=HUB-PI-001
+# Optional later:
+# Environment=KONPANION_INGEST_TOKEN=some_shared_secret
+
+[Install]
+WantedBy=multi-user.target

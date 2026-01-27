@@ -1,0 +1,134 @@
+<div style="position:fixed;top:10px;left:10px;z-index:9999;background:red;padding:8px;">
+  DEBUG INDEX LOADED
+</div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo-dot"></div>
+      <div>
+        <div class="brand-title">Konpanion</div>
+        <div class="brand-sub">Monitoring Hub</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item active" href="#">Dashboard</a>
+      <a class="nav-item" href="#">Telemetry Stream</a>
+      <a class="nav-item" href="#">Settings</a>
+    </nav>
+
+    <div class="panel mini">
+      <div class="row">
+        <span class="pill ok" id="apiStatusPill">API</span>
+        <span class="muted" id="apiStatusText">Checking...</span>
+      </div>
+      <div class="row">
+        <span class="pill" id="wsStatusPill">WS</span>
+        <span class="muted" id="wsStatusText">Idle</span>
+      </div>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <div class="left">
+      <h1 class="page-title">Dashboard</h1>
+      <div class="muted" id="whoamiLine">Loading session...</div>
+    </div>
+    <div class="right">
+      <div class="chip">Hub ID: <b id="hubId">—</b></div>
+      <div class="chip">Status Updated: <b id="lastUpdated">—</b></div>
+      <a class="chip link" href="/logout">Logout</a>
+    </div>
+  </header>
+
+  <main class="content">
+    <section class="grid">
+
+      <!-- Device Cards -->
+      <div class="card device" id="card-VAEL" data-device-type="VAEL">
+        <div class="card-head">
+          <div>
+            <div class="card-kicker">VAEL</div>
+            <div class="card-title">Vitals & Environment</div>
+          </div>
+          <div class="status-pill standby" id="status-VAEL">Standby</div>
+        </div>
+        <div class="metric">
+          <div class="label">Battery</div>
+          <div class="value"><span id="bat-VAEL">—</span>%</div>
+        </div>
+        <div class="sparkline placeholder"></div>
+        <div class="hint" id="hint-VAEL">Awaiting telemetry…</div>
+      </div>
+
+      <div class="card device" id="card-SNUU" data-device-type="SNUU">
+        <div class="card-head">
+          <div>
+            <div class="card-kicker">SNUU</div>
+            <div class="card-title">Sleep & Nighttime</div>
+          </div>
+          <div class="status-pill standby" id="status-SNUU">Standby</div>
+        </div>
+        <div class="metric">
+          <div class="label">Battery</div>
+          <div class="value"><span id="bat-SNUU">—</span>%</div>
+        </div>
+        <div class="sparkline placeholder"></div>
+        <div class="hint" id="hint-SNUU">Awaiting telemetry…</div>
+      </div>
+
+      <div class="card device warn" id="card-NOOH" data-device-type="NOOH">
+        <div class="card-head">
+          <div>
+            <div class="card-kicker">NOOH</div>
+            <div class="card-title">Fall Detector</div>
+          </div>
+          <div class="status-pill standby" id="status-NOOH">Standby</div>
+        </div>
+        <div class="metric">
+          <div class="label">Battery</div>
+          <div class="value"><span id="bat-NOOH">—</span>%</div>
+        </div>
+        <div class="sparkline placeholder"></div>
+        <div class="hint" id="hint-NOOH">Awaiting telemetry…</div>
+      </div>
+
+      <!-- Right panel -->
+      <div class="card side">
+        <div class="side-title">Issue Summary</div>
+        <div class="issue-count" id="issueCount">0 Active Issues</div>
+
+        <div class="side-sub">Device Status</div>
+        <div class="device-list" id="deviceList">
+          <div class="device-row"><span class="dot standby"></span> VAEL <span class="muted">Standby</span></div>
+          <div class="device-row"><span class="dot standby"></span> SNUU <span class="muted">Standby</span></div>
+          <div class="device-row"><span class="dot standby"></span> NOOH <span class="muted">Standby</span></div>
+        </div>
+
+        <button class="btn" disabled id="sendAlertBtn">Send Alert</button>
+        <div class="hint small">Alerts activate when devices report issues.</div>
+      </div>
+
+      <!-- Telemetry Stream -->
+      <div class="card stream">
+        <div class="stream-head">
+          <div class="stream-title">Telemetry Stream</div>
+          <div class="muted" id="streamMeta">No events yet</div>
+        </div>
+        <div class="stream-list" id="streamList">
+          <div class="stream-empty">Waiting for first telemetry event…</div>
+        </div>
+      </div>
+
+      <!-- Live stats -->
+      <div class="card stats">
+        <div class="stat"><div class="muted">Events/sec</div><div class="big" id="eps">0</div></div>
+        <div class="stat"><div class="muted">Data Today</div><div class="big" id="dataToday">0.0 MB</div></div>
+        <div class="stat"><div class="muted">Devices Online</div><div class="big" id="onlineCount">0</div></div>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+<script src="/static/app.js"></script>

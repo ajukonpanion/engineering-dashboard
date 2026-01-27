@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Konpanion Hub Login</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <style>
+    .login-wrap{
+      min-height: calc(100vh - 70px);
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+    .login-card{
+      width: min(420px, 100%);
+      padding:18px;
+    }
+    .field{ display:flex; flex-direction:column; gap:6px; margin-top:12px; }
+    .label{ font-size:12px; color:var(--muted); }
+    input{
+      background: rgba(0,0,0,.35);
+      border:1px solid var(--border);
+      color: var(--text);
+      padding:12px 12px;
+      border-radius:12px;
+      outline:none;
+    }
+    input:focus{ border-color: rgba(124,58,237,.5); box-shadow: 0 0 0 3px rgba(124,58,237,.15); }
+    .err{ margin-top:12px; color:#ffb4b4; font-size:12px; }
+    .hint{ margin-top:10px; color:var(--muted); font-size:12px; line-height:1.4; }
+    .row{ display:flex; gap:10px; margin-top:14px; }
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(124,58,237,.85), rgba(59,130,246,.75));
+      border-color: rgba(255,255,255,.10);
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">❤</div>
+      <div>
+        <div class="brand-title">Konpanion</div>
+        <div class="brand-sub">Monitoring Hub</div>
+      </div>
+    </div>
+    <div class="topmeta">
+      <div class="pill">Secure Access</div>
+    </div>
+  </header>
+
+  <div class="login-wrap">
+    <section class="card login-card">
+      <div class="card-title">Admin Login</div>
+      <div class="card-sub">Only registered administrators can access this hub.</div>
+
+      <form method="post" action="/login">
+        <div class="field">
+          <div class="label">Username</div>
+          <input name="username" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <div class="label">Password</div>
+          <input name="password" type="password" autocomplete="current-password" required />
+        </div>
+
+        {% if error %}
+          <div class="err">{{ error }}</div>
+        {% endif %}
+
+        <div class="row">
+          <button class="btn primary" type="submit">Sign in</button>
+          <a class="btn" href="/health" style="text-decoration:none;display:inline-grid;place-items:center;">Status</a>
+        </div>
+
+        <div class="hint">
+          Default (temporary) credentials: <b>admin / admin</b><br/>
+          Your allow-list is stored locally on the hub.
+        </div>
+      </form>
+    </section>
+  </div>
+</body>
+</html>
