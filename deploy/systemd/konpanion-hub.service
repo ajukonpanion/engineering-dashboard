@@ -1,0 +1,29 @@
+[Unit]
+Description=Konpanion Hub (FastAPI/Uvicorn)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ajumon247
+Group=ajumon247
+WorkingDirectory=/home/ajumon247/konpanion-hub/backend
+
+Environment="PATH=/home/ajumon247/konpanion-hub/backend/.venv/bin"
+Environment="PYTHONUNBUFFERED=1"
+
+ExecStart=/home/ajumon247/konpanion-hub/backend/.venv/bin/python -m uvicorn app.main:app \
+  --host 0.0.0.0 --port 8000 --proxy-headers --log-level info
+
+Restart=always
+RestartSec=2
+
+# optional: give it more open files
+LimitNOFILE=65535
+
+# Safe hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
