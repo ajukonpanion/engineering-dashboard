@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Konpanion Hub — Telemetry</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo-dot"></div>
+        <div>
+          <div class="brand-title">Konpanion</div>
+          <div class="brand-sub">Monitoring Hub</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a class="nav-item" href="/dashboard">🏠 Dashboard</a>
+        <a class="nav-item active" href="/telemetry">📡 Telemetry Stream</a>
+        <a class="nav-item" href="/settings">⚙️ Settings</a>
+      </nav>
+    </aside>
+
+    <header class="topbar">
+      <h1 class="page-title">Telemetry Stream</h1>
+      <div class="chip">Hub ID: <b id="hubId">—</b></div>
+    </header>
+
+    <main class="content">
+      <section class="card" style="grid-column: 1 / -1;">
+        <div class="stream-head">
+          <div class="stream-title">Live Telemetry</div>
+          <div class="muted">WebSocket coming next</div>
+        </div>
+        <div class="stream-list">
+          <div class="stream-empty">This page will show raw events, filters, and per-device streams.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

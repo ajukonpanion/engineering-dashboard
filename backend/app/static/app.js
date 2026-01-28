@@ -88,8 +88,9 @@ function renderStream(events) {
 async function tick() {
   // session line
   try {
-    const who = await getJSON("/api/_whoami");
-    setText("whoamiLine", `Signed in as ${who.username || "user"} (${who.role || "admin"})`);
+    const who = await getJSON("/_whoami");
+    const uname = who.session?.user || who.session?.u || "user";
+    setText("whoamiLine", `Signed in as ${uname}`);
   } catch {
     setText("whoamiLine", `Session unavailable (are you logged in?)`);
   }

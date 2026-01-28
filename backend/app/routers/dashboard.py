@@ -1,105 +1,219 @@
+# backend/app/routers/dashboard.py
+
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
-from fastapi.responses import RedirectResponse, HTMLResponse
-from starlette.templating import Jinja2Templates
-from pathlib import Path
+from fastapi import APIRouter, Request, Form
+from fastapi.responses import (
+    HTMLResponse,
+    RedirectResponse,
+    Response,
+)
+from fastapi.templating import Jinja2Templates
+from starlette.status import (
+    HTTP_200_OK,
+    HTTP_302_FOUND,
+    HTTP_303_SEE_OTHER,
+    HTTP_307_TEMPORARY_REDIRECT,
+)
 
 router = APIRouter()
 
-# Try to use templates folder if it exists: backend/app/templates
-TEMPLATES_DIR = Path(__file__).resolve().parents[1] / "templates"
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+# Templates live in backend/app/templates (your WorkingDirectory is backend/)
+templates = Jinja2Templates(directory="app/templates")
+
+# ---------------------------------------------------------------------
+# Simple auth (TEMP): admin/admin via cookie
+# Later replace with real auth + hashed passwords + DB.
+# ---------------------------------------------------------------------
+AUTH_COOKIE = "konpanion_auth"
+AUTH_COOKIE_VALUE = "admin"  # minimal marker
+TEMP_USERNAME = "admin"
+TEMP_PASSWORD = "admin"
 
 
-def _logged_in(request: Request) -> bool:
-    # SessionMiddleware must be enabled in main.py (you already did that)
-    return bool(request.session.get("user"))
+def _is_authed(request: Request) -> bool:
+    return request.cookies.get(AUTH_COOKIE) == AUTH_COOKIE_VALUE
 
 
-def _fallback_html(user: str) -> str:
-    return f"""
-    <!doctype html>
-    <html>
-    <head>
-      <meta charset="utf-8"/>
-      <meta name="viewport" content="width=device-width, initial-scale=1"/>
-      <title>Konpanion Hub — Dashboard</title>
-      <style>
-        body {{
-          background:#0b0e11; color:#eaeaea;
-          font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-          margin:0; padding:24px;
-        }}
-        .row {{ display:flex; gap:12px; flex-wrap:wrap; }}
-        .card {{
-          background:#11151a; border-radius:14px; padding:18px;
-          box-shadow: 0 0 0 1px rgba(255,255,255,0.05),
-                      0 10px 30px rgba(0,0,0,0.6);
-          min-width: 260px;
-        }}
-        a, button {{
-          color:#0b0e11; text-decoration:none;
-        }}
-        .btn {{
-          display:inline-block;
-          padding:10px 14px; border-radius:10px;
-          background: linear-gradient(135deg, #4ea1ff, #6b7cff);
-          font-weight:600;
-          border: none;
-          cursor:pointer;
-        }}
-        .muted {{ color:#7a8596; }}
-        form {{ display:inline; }}
-      </style>
-    </head>
-    <body>
-      <h2>Konpanion Hub — Dashboard</h2>
-      <p class="muted">Logged in as <b>{user}</b></p>
-
-      <div class="row">
-        <div class="card">
-          <h3>Hub</h3>
-          <p class="muted">API health / hub snapshot lives under <code>/api</code></p>
-          <p><a class="btn" href="/api/hub">View /api/hub</a></p>
-        </div>
-
-        <div class="card">
-          <h3>Telemetry</h3>
-          <p class="muted">WebSocket endpoint: <code>/ws/telemetry</code></p>
-          <p class="muted">Once devices send data, you’ll see live updates.</p>
-        </div>
-
-        <div class="card">
-          <h3>Session</h3>
-          <form method="post" action="/logout">
-            <button class="btn" type="submit">Logout</button>
-          </form>
-        </div>
-      </div>
-    </body>
-    </html>
-    """
+def _require_auth(request: Request) -> RedirectResponse | None:
+    """Return redirect response if not authed, else None."""
+    if _is_authed(request):
+        return None
+    # Preserve destination so login can bring you back
+    dest = request.url.path
+    return RedirectResponse(url=f"/login?next={dest}", status_code=HTTP_303_SEE_OTHER)
 
 
-@router.get("/", response_class=HTMLResponse)
-async def dashboard_page(request: Request):
-    if not _logged_in(request):
-        return RedirectResponse(url="/login", status_code=303)
-
-    user = request.session.get("user", "admin")
-
-    # If you have a template file, use it: backend/app/templates/dashboard.html
-    if TEMPLATES_DIR.exists() and (TEMPLATES_DIR / "dashboard.html").exists():
-        return templates.TemplateResponse(
-            "dashboard.html",
-            {"request": request, "user": user},
-        )
-
-    # Otherwise show a built-in dashboard page
-    return HTMLResponse(_fallback_html(user))
+def _set_auth_cookie(resp: Response) -> None:
+    # Cookie scoped to whole site. Use SameSite=Lax so it works on phones.
+    # Secure=False because we're serving HTTP on a local AP.
+    resp.set_cookie(
+        key=AUTH_COOKIE,
+        value=AUTH_COOKIE_VALUE,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        path="/",
+        max_age=60 * 60 * 24 * 7,  # 7 days
+    )
 
 
-@router.get("/dashboard", response_class=HTMLResponse)
-async def dashboard_alias(request: Request):
-    return await dashboard_page(request)
+def _clear_auth_cookie(resp: Response) -> None:
+    resp.delete_cookie(key=AUTH_COOKIE, path="/")
+
+
+# ---------------------------------------------------------------------
+# Root + HEAD handlers (fixes 405 noise from phones / captive checks)
+# ---------------------------------------------------------------------
+@router.get("/", include_in_schema=False)
+def root() -> RedirectResponse:
+    # Always land users on the dashboard page
+    return RedirectResponse(url="/dashboard", status_code=HTTP_307_TEMPORARY_REDIRECT)
+
+
+@router.head("/", include_in_schema=False)
+def head_root() -> Response:
+    return Response(status_code=HTTP_200_OK)
+
+
+@router.head("/dashboard", include_in_schema=False)
+def head_dashboard() -> Response:
+    return Response(status_code=HTTP_200_OK)
+
+
+@router.head("/telemetry", include_in_schema=False)
+def head_telemetry() -> Response:
+    return Response(status_code=HTTP_200_OK)
+
+
+@router.head("/settings", include_in_schema=False)
+def head_settings() -> Response:
+    return Response(status_code=HTTP_200_OK)
+
+
+# ---------------------------------------------------------------------
+# Captive portal / OS connectivity probes (reduce "Invalid HTTP request")
+# ---------------------------------------------------------------------
+_CAPTIVE_PATHS = (
+    "/generate_204",          # Android
+    "/hotspot-detect.html",   # Apple
+    "/ncsi.txt",              # Windows
+    "/connecttest.txt",       # Windows
+    "/redirect",              # Some captive flows
+)
+
+@router.get("/generate_204", include_in_schema=False)
+@router.get("/hotspot-detect.html", include_in_schema=False)
+@router.get("/ncsi.txt", include_in_schema=False)
+@router.get("/connecttest.txt", include_in_schema=False)
+@router.get("/redirect", include_in_schema=False)
+def captive_probe_get() -> RedirectResponse:
+    # Send them somewhere predictable
+    return RedirectResponse(url="/dashboard", status_code=HTTP_302_FOUND)
+
+
+@router.head("/generate_204", include_in_schema=False)
+@router.head("/hotspot-detect.html", include_in_schema=False)
+@router.head("/ncsi.txt", include_in_schema=False)
+@router.head("/connecttest.txt", include_in_schema=False)
+@router.head("/redirect", include_in_schema=False)
+def captive_probe_head() -> Response:
+    return Response(status_code=HTTP_200_OK)
+
+
+# ---------------------------------------------------------------------
+# Login / Logout
+# ---------------------------------------------------------------------
+@router.get("/login", response_class=HTMLResponse, include_in_schema=False)
+def login_page(request: Request, next: str = "/dashboard"):
+    # If already authed, skip
+    if _is_authed(request):
+        return RedirectResponse(url=next or "/dashboard", status_code=HTTP_303_SEE_OTHER)
+
+    # IMPORTANT: This expects app/templates/login.html
+    # If you don't have it yet, create a basic one, or tell me and I’ll paste it.
+    return templates.TemplateResponse(
+        "login.html",
+        {
+            "request": request,
+            "next": next,
+            "error": None,
+        },
+    )
+
+
+@router.post("/login", include_in_schema=False)
+def login_action(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    next: str = Form("/dashboard"),
+):
+    if username == TEMP_USERNAME and password == TEMP_PASSWORD:
+        resp = RedirectResponse(url=next or "/dashboard", status_code=HTTP_303_SEE_OTHER)
+        _set_auth_cookie(resp)
+        return resp
+
+    # invalid creds → render page with error
+    return templates.TemplateResponse(
+        "login.html",
+        {
+            "request": request,
+            "next": next,
+            "error": "Invalid credentials (try admin/admin).",
+        },
+        status_code=200,
+    )
+
+
+@router.get("/logout", include_in_schema=False)
+def logout():
+    resp = RedirectResponse(url="/login", status_code=HTTP_303_SEE_OTHER)
+    _clear_auth_cookie(resp)
+    return resp
+
+
+# ---------------------------------------------------------------------
+# Dashboard pages
+# ---------------------------------------------------------------------
+@router.get("/dashboard", response_class=HTMLResponse, include_in_schema=False)
+def dashboard(request: Request):
+    guard = _require_auth(request)
+    if guard:
+        return guard
+
+    # If your dashboard expects variables, pass them in this dict
+    return templates.TemplateResponse(
+        "dashboard.html",
+        {
+            "request": request,
+        },
+    )
+
+
+@router.get("/telemetry", response_class=HTMLResponse, include_in_schema=False)
+def telemetry(request: Request):
+    guard = _require_auth(request)
+    if guard:
+        return guard
+
+    return templates.TemplateResponse(
+        "telemetry.html",
+        {
+            "request": request,
+        },
+    )
+
+
+@router.get("/settings", response_class=HTMLResponse, include_in_schema=False)
+def settings(request: Request):
+    guard = _require_auth(request)
+    if guard:
+        return guard
+
+    return templates.TemplateResponse(
+        "settings.html",
+        {
+            "request": request,
+        },
+    )

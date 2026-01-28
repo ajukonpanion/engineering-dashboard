@@ -1,18 +1,183 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Konpanion Hub — Dashboard</title>
+  <title>Konpanion Hub — Engineering Dashboard</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <link rel="icon" href="/static/favicon.ico">
 </head>
 <body>
-  <h1>Konpanion Hub — Dashboard</h1>
-  <p>Logged in as {{ user }}</p>
 
-  <p><a href="/api/hub">View /api/hub</a></p>
+<div class="app-shell">
 
-  <form method="post" action="/logout">
-    <button type="submit">Logout</button>
-  </form>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo-dot"></div>
+      <div>
+        <div class="brand-title">Konpanion</div>
+        <div class="brand-sub">Monitoring Hub</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item active" href="/dashboard">🏠 Dashboard</a>
+      <a class="nav-item" href="/telemetry">📡 Telemetry Stream</a>
+      <a class="nav-item" href="/settings">⚙️ Settings</a>
+    </nav>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="row">
+        <span class="pill ok" id="apiStatusPill">●</span>
+        <div>
+          <div style="font-weight:800;">API Status</div>
+          <div class="muted" id="apiStatusText">Operational</div>
+        </div>
+      </div>
+      <div class="hint small" id="whoamiLine">Signed in as {{ user }}</div>
+
+      <form method="post" action="/logout" style="margin-top:10px;">
+        <button class="btn" type="submit">Logout</button>
+      </form>
+    </div>
+  </aside>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <h1 class="page-title">Dashboard</h1>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="chip">Hub ID: <b id="hubId">—</b></div>
+      <div class="chip">Status Updated: <b id="lastUpdated">—</b></div>
+      <div class="chip link" onclick="window.location.href='/api/hub'">Open /api/hub</div>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="content">
+    <div class="grid">
+
+      <!-- Device cards row -->
+      <section class="card device">
+        <div class="card-head">
+          <div>
+            <div class="card-kicker">VAEL</div>
+            <div class="card-title">Vitals & Environment</div>
+          </div>
+          <div class="status-pill standby" id="status-VAEL">Standby</div>
+        </div>
+
+        <div class="metric">
+          <div class="label">Battery Level</div>
+          <div class="value"><span id="bat-VAEL">—</span>%</div>
+        </div>
+
+        <div class="sparkline placeholder"></div>
+        <div class="hint" id="hint-VAEL">Awaiting telemetry…</div>
+      </section>
+
+      <section class="card device">
+        <div class="card-head">
+          <div>
+            <div class="card-kicker">SNUU</div>
+            <div class="card-title">Sleep & Nighttime</div>
+          </div>
+          <div class="status-pill standby" id="status-SNUU">Standby</div>
+        </div>
+
+        <div class="metric">
+          <div class="label">Battery Level</div>
+          <div class="value"><span id="bat-SNUU">—</span>%</div>
+        </div>
+
+        <div class="sparkline placeholder"></div>
+        <div class="hint" id="hint-SNUU">Awaiting telemetry…</div>
+      </section>
+
+      <section class="card device">
+        <div class="card-head">
+          <div>
+            <div class="card-kicker">NOOH</div>
+            <div class="card-title">Fall Detector</div>
+          </div>
+          <div class="status-pill standby" id="status-NOOH">Standby</div>
+        </div>
+
+        <div class="metric">
+          <div class="label">Battery Level</div>
+          <div class="value"><span id="bat-NOOH">—</span>%</div>
+        </div>
+
+        <div class="sparkline placeholder"></div>
+        <div class="hint" id="hint-NOOH">Awaiting telemetry…</div>
+      </section>
+
+      <!-- Issue Summary -->
+      <section class="card side">
+        <div class="side-title">Issue Summary</div>
+        <div class="issue-count" id="issueCount">0 Active Issues</div>
+
+        <div class="panel mini">
+          <div class="row">
+            <span class="pill">Devices Online</span>
+            <span class="big" id="onlineCount">0</span>
+          </div>
+          <div class="side-sub">Device Status</div>
+          <div class="device-list" id="deviceList">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+        <button class="btn" disabled>Send Alert</button>
+        <div class="hint small">Alerting becomes active once devices stream telemetry and rules are enabled.</div>
+      </section>
+
+      <!-- Telemetry Stream -->
+      <section class="card stream">
+        <div class="stream-head">
+          <div class="stream-title">Telemetry Stream</div>
+          <div class="muted" id="streamMeta">No events yet</div>
+        </div>
+        <div class="stream-list" id="streamList">
+          <div class="stream-empty">Waiting for first telemetry event…</div>
+        </div>
+      </section>
+
+      <!-- Live Stats -->
+      <section class="card stats">
+        <div class="stat">
+          <div class="muted">Events / Sec</div>
+          <div class="big" id="eps">0</div>
+        </div>
+        <div class="stat">
+          <div class="muted">Data Today</div>
+          <div class="big" id="dataToday">0 MB</div>
+        </div>
+        <div class="stat">
+          <div class="muted">Active Issues</div>
+          <div class="big" id="issueCount2">0</div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+</div>
+
+<script src="/static/app.js"></script>
+<script>
+  // mirror issue count into second location (optional)
+  const ic = document.getElementById("issueCount");
+  const ic2 = document.getElementById("issueCount2");
+  if (ic && ic2) {
+    const obs = new MutationObserver(() => {
+      const txt = ic.textContent || "";
+      const n = (txt.match(/\d+/) || ["0"])[0];
+      ic2.textContent = n;
+    });
+    obs.observe(ic, { childList: true, characterData: true, subtree: true });
+  }
+</script>
+
 </body>
 </html>
